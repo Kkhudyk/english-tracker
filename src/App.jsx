@@ -116,6 +116,7 @@ export default function App() {
   const [view, setView] = useState("overview");
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("All");
+  const [calMonth, setCalMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -182,7 +183,6 @@ export default function App() {
 
   // Calendar data
   const studiedDates = new Set(sessions.map(s => s.date));
-  const [calMonth, setCalMonth] = useState(currentMonth);
   const calYear  = parseInt(calMonth.slice(0, 4));
   const calMonthN = parseInt(calMonth.slice(5, 7)) - 1;
   const firstDay = new Date(calYear, calMonthN, 1).getDay();
