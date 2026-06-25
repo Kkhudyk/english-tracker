@@ -38,19 +38,26 @@ function RingProgress({ pct, size = 140, stroke = 10, color = "#00E5BE", label, 
 // ── Bar Chart ────────────────────────────────────────────────────────────────
 function BarChart({ data, color = "#00E5BE" }) {
   if (!data?.length) return <div style={{ color: "#6b7a8d", fontSize: 13, padding: "20px 0" }}>No data yet</div>;
-  const max = Math.max(...data.map(d => d.count), 1);
+  // Pad to 6 months so chart always looks full
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(); d.setMonth(d.getMonth() - (5 - i));
+    const key = d.toISOString().slice(0, 7);
+    const found = data.find(x => `2026-${x.label}` === key || x.label === key.slice(5));
+    return { label: key.slice(5), count: found?.count || 0, isCurrent: i === 5 };
+  });
+  const max = Math.max(...months.map(d => d.count), 1);
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80, width: "100%" }}>
-      {data.map((d, i) => (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 90, width: "100%" }}>
+      {months.map((d, i) => (
         <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <span style={{ fontSize: 10, color: "#6b7a8d" }}>{d.count}</span>
+          {d.count > 0 && <span style={{ fontSize: 10, color: "#6b7a8d" }}>{d.count}</span>}
           <div style={{
-            width: "100%", background: color,
-            height: Math.max((d.count / max) * 60, d.count > 0 ? 4 : 0),
-            borderRadius: 3, opacity: i === data.length - 1 ? 1 : 0.45,
+            width: "100%", background: d.count > 0 ? color : "#1e2630",
+            height: Math.max((d.count / max) * 60, 4),
+            borderRadius: 4, opacity: d.isCurrent ? 1 : 0.5,
             transition: "height 0.8s ease",
           }} />
-          <span style={{ fontSize: 9, color: "#6b7a8d", whiteSpace: "nowrap" }}>{d.label}</span>
+          <span style={{ fontSize: 9, color: d.isCurrent ? "#6b7a8d" : "#3a4a5a", whiteSpace: "nowrap" }}>{d.label}</span>
         </div>
       ))}
     </div>
@@ -77,16 +84,21 @@ function WordRow({ word, translation, category, date, example, phrase }) {
       onMouseEnter={e => e.currentTarget.style.borderColor = "#2a3540"}
       onMouseLeave={e => e.currentTarget.style.borderColor = "#1e2630"}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: 15, minWidth: 120 }}>{word}</span>
-        <span style={{ color: "#6b7a8d", fontSize: 13, flex: 1 }}>{translation}</span>
-        <span style={{
-          fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
-          background: catColor + "22", color: catColor, letterSpacing: "0.04em",
-          whiteSpace: "nowrap",
-        }}>{category || "—"}</span>
-        <span style={{ fontSize: 11, color: "#3a4a5a", whiteSpace: "nowrap" }}>{date}</span>
-        <span style={{ color: "#3a4a5a", fontSize: 12, marginLeft: 4 }}>{open ? "▲" : "▼"}</span>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: 15 }}>{word}</span>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
+              background: catColor + "22", color: catColor, letterSpacing: "0.04em", whiteSpace: "nowrap",
+            }}>{category || "—"}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
+            <span style={{ color: "#6b7a8d", fontSize: 13 }}>{translation}</span>
+          </div>
+          <span style={{ fontSize: 11, color: "#3a4a5a" }}>{date}</span>
+        </div>
+        <span style={{ color: "#3a4a5a", fontSize: 12, flexShrink: 0, marginTop: 2 }}>{open ? "▲" : "▼"}</span>
       </div>
       {open && (
         <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #1e2630" }}>
