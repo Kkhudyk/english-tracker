@@ -180,6 +180,19 @@ export default function App() {
   const current = monthHistory.find(m => m.isCurrent) || {};
   const totalWords = words.length;
 
+  // Calendar data
+  const studiedDates = new Set(sessions.map(s => s.date));
+  const [calMonth, setCalMonth] = useState(currentMonth);
+  const calYear  = parseInt(calMonth.slice(0, 4));
+  const calMonthN = parseInt(calMonth.slice(5, 7)) - 1;
+  const firstDay = new Date(calYear, calMonthN, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonthN + 1, 0).getDate();
+  const prevMonth = () => { const d = new Date(calYear, calMonthN - 1, 1); setCalMonth(d.toISOString().slice(0, 7)); };
+  const nextMonth = () => { const d = new Date(calYear, calMonthN + 1, 1); setCalMonth(d.toISOString().slice(0, 7)); };
+  const calMonthSessions = sessions.filter(s => s.date?.startsWith(calMonth));
+  const calStudiedDays = new Set(calMonthSessions.map(s => s.date)).size;
+  const calHours = calMonthSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60;
+
   // Category breakdown for words view
   const catCounts = {};
   words.forEach(w => { const c = w.category || "Other"; catCounts[c] = (catCounts[c] || 0) + 1; });
@@ -225,6 +238,7 @@ export default function App() {
           <div className="nav-tabs" style={{ display: "flex", gap: 4 }}>
             {navBtn("overview", "Overview")}
             {navBtn("words", `Words (${totalWords})`)}
+            {navBtn("calendar", "📅")}
           </div>
           <button className="refresh-btn" onClick={load} style={{ background: "transparent", border: "1px solid #1e2630", borderRadius: 8, color: "#6b7a8d", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>↻ Refresh</button>
         </div>
@@ -281,6 +295,66 @@ export default function App() {
                 ? <p style={{ color: "#6b7a8d", fontSize: 14, textAlign: "center", padding: "40px 0" }}>No words found</p>
                 : filtered.map((w, i) => <WordRow key={i} word={w.word} translation={w.translation} category={w.category} date={w.dateAdded} example={w.example} phrase={w.phrase} />)
               }
+            </div>
+          </>
+        )}
+
+        {view === "calendar" && (
+          <>
+            {/* Month nav */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <button onClick={prevMonth} style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 8, color: "#e2e8f0", fontSize: 18, padding: "6px 14px", cursor: "pointer" }}>‹</button>
+              <span style={{ fontWeight: 700, fontSize: 16, color: "#fff" }}>
+                {new Date(calYear, calMonthN).toLocaleString("en", { month: "long", year: "numeric" })}
+              </span>
+              <button onClick={nextMonth} disabled={calMonth >= currentMonth} style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 8, color: calMonth >= currentMonth ? "#3a4a5a" : "#e2e8f0", fontSize: 18, padding: "6px 14px", cursor: calMonth >= currentMonth ? "default" : "pointer" }}>›</button>
+            </div>
+
+            {/* Stats row */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+              <div style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 12, padding: "14px 16px" }}>
+                <span style={{ fontSize: 11, color: "#6b7a8d", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.06em" }}>Days studied</span>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "#f97316", marginTop: 4 }}>{calStudiedDays}</div>
+              </div>
+              <div style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 12, padding: "14px 16px" }}>
+                <span style={{ fontSize: 11, color: "#6b7a8d", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.06em" }}>Hours studied</span>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "#7c3aed", marginTop: 4 }}>{calHours.toFixed(1)}h</div>
+              </div>
+            </div>
+
+            {/* Calendar grid */}
+            <div style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px" }}>
+              {/* Day labels */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: 8 }}>
+                {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
+                  <div key={d} style={{ textAlign: "center", fontSize: 11, color: "#3a4a5a", fontWeight: 600, padding: "4px 0" }}>{d}</div>
+                ))}
+              </div>
+              {/* Days */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+                {Array.from({ length: firstDay === 0 ? 6 : firstDay - 1 }).map((_, i) => <div key={`e${i}`} />)}
+                {Array.from({ length: daysInMonth }, (_, i) => {
+                  const day = i + 1;
+                  const dateStr = `${calMonth}-${String(day).padStart(2, "0")}`;
+                  const studied = studiedDates.has(dateStr);
+                  const isToday = dateStr === new Date().toISOString().slice(0, 10);
+                  const daySession = sessions.filter(s => s.date === dateStr);
+                  const mins = daySession.reduce((sum, s) => sum + (s.duration || 0), 0);
+                  return (
+                    <div key={day} title={studied ? `${mins} min` : ""} style={{
+                      aspectRatio: "1", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 13, fontWeight: studied ? 700 : 400,
+                      background: studied ? "#00E5BE22" : "transparent",
+                      color: studied ? "#00E5BE" : isToday ? "#fff" : "#6b7a8d",
+                      border: isToday ? "1px solid #00E5BE66" : "1px solid transparent",
+                      position: "relative",
+                    }}>
+                      {day}
+                      {studied && <span style={{ position: "absolute", bottom: 3, left: "50%", transform: "translateX(-50%)", width: 4, height: 4, borderRadius: "50%", background: "#00E5BE" }} />}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </>
         )}
