@@ -1,5 +1,5 @@
-const VOCAB_DB = "a5502e630cb742d9ae0206a8a4d1ecfb";
-const GOALS_DB = "54062d676a5044fdbf626ca6c1dbf6ab";
+const VOCAB_DB = "54062d676a5044fdbf626ca6c1dbf6ab";
+const GOALS_DB = "a5502e630cb742d9ae0206a8a4d1ecfb";
 
 async function queryDatabase(dbId, token) {
   const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
@@ -22,6 +22,7 @@ function getProp(props, name, type) {
   if (type === "title") return p.title?.map(t => t.plain_text).join("") || "";
   if (type === "select") return p.select?.name || "";
   if (type === "date") return p.date?.start?.slice(0, 10) || "";
+  if (type === "created_time") return p.created_time?.slice(0, 10) || "";
   if (type === "rich_text") return p.rich_text?.map(t => t.plain_text).join("") || "";
   if (type === "number") return p.number ?? 0;
   return null;
@@ -50,7 +51,7 @@ export default async function handler(req, res) {
         word: getProp(props, "Word", "title"),
         translation: getProp(props, "Translation", "rich_text"),
         category: getProp(props, "Category", "select"),
-        dateAdded: getProp(props, "Date Added", "date"),
+        dateAdded: getProp(props, "Date Added", "created_time"),
         example: getProp(props, "Example Sentence", "rich_text"),
         phrase: getProp(props, "Memory Phrase", "rich_text"),
       };
