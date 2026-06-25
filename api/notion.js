@@ -37,6 +37,13 @@ export default async function handler(req, res) {
       queryDatabase(GOALS_DB, token),
     ]);
 
+    // Debug: return raw props of first page to identify property names/types
+    if (req.query?.debug === "1" && vocabPages.length > 0) {
+      const rawProps = Object.entries(vocabPages[0].properties).map(([k, v]) => ({ name: k, type: v.type }));
+      const rawGoalProps = goalPages.length > 0 ? Object.entries(goalPages[0].properties).map(([k, v]) => ({ name: k, type: v.type })) : [];
+      return res.status(200).json({ vocabProps: rawProps, goalProps: rawGoalProps });
+    }
+
     const words = vocabPages.map(p => {
       const props = p.properties;
       return {
