@@ -8,58 +8,70 @@ async function fetchData() {
 }
 
 // ── Ring Progress ────────────────────────────────────────────────────────────
-function RingProgress({ pct, size = 140, stroke = 10, color = "#00E5BE", label, sublabel }) {
+function RingProgress({ pct, size = 120, stroke = 10, color = "#00E5BE", label }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - Math.min(pct / 100, 1) * circ;
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1e2630" strokeWidth={stroke} />
-        <circle
-          cx={size / 2} cy={size / 2} r={r} fill="none"
-          stroke={color} strokeWidth={stroke}
-          strokeDasharray={circ} strokeDashoffset={offset}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dashoffset 1s ease" }}
-        />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1e2630" strokeWidth={stroke} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 1s ease" }} />
       </svg>
-      <div style={{
-        position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center", gap: 2,
-      }}>
-        <span style={{ fontSize: 26, fontWeight: 700, color: "#fff", lineHeight: 1 }}>{Math.round(pct)}%</span>
-        {label && <span style={{ fontSize: 11, color: "#6b7a8d", fontWeight: 500, letterSpacing: "0.04em" }}>{label}</span>}
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
+        <span style={{ fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1 }}>{Math.round(pct)}%</span>
+        {label && <span style={{ fontSize: 10, color: "#6b7a8d", fontWeight: 500 }}>{label}</span>}
       </div>
     </div>
   );
 }
 
-// ── Bar Chart ────────────────────────────────────────────────────────────────
-function BarChart({ data, color = "#00E5BE" }) {
-  if (!data?.length) return <div style={{ color: "#6b7a8d", fontSize: 13, padding: "20px 0" }}>No data yet</div>;
-  // Pad to 6 months so chart always looks full
-  const months = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(); d.setMonth(d.getMonth() - (5 - i));
-    const key = d.toISOString().slice(0, 7);
-    const found = data.find(x => `2026-${x.label}` === key || x.label === key.slice(5));
-    return { label: key.slice(5), count: found?.count || 0, isCurrent: i === 5 };
-  });
-  const max = Math.max(...months.map(d => d.count), 1);
+// ── Progress Bar ─────────────────────────────────────────────────────────────
+function ProgressBar({ pct, color = "#00E5BE", fact, target, unit }) {
+  const clamped = Math.min(pct, 100);
+  const done = pct >= 100;
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 90, width: "100%" }}>
-      {months.map((d, i) => (
-        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          {d.count > 0 && <span style={{ fontSize: 10, color: "#6b7a8d" }}>{d.count}</span>}
-          <div style={{
-            width: "100%", background: d.count > 0 ? color : "#1e2630",
-            height: Math.max((d.count / max) * 60, 4),
-            borderRadius: 4, opacity: d.isCurrent ? 1 : 0.5,
-            transition: "height 0.8s ease",
-          }} />
-          <span style={{ fontSize: 9, color: d.isCurrent ? "#6b7a8d" : "#3a4a5a", whiteSpace: "nowrap" }}>{d.label}</span>
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+        <span style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 600 }}>{fact} <span style={{ color: "#3a4a5a", fontWeight: 400 }}>/ {target} {unit}</span></span>
+        <span style={{ fontSize: 11, color: done ? color : "#6b7a8d" }}>{done ? "✓ Done" : `${Math.round(pct)}%`}</span>
+      </div>
+      <div style={{ height: 6, background: "#1e2630", borderRadius: 3, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${clamped}%`, background: color, borderRadius: 3, transition: "width 0.8s ease" }} />
+      </div>
+    </div>
+  );
+}
+
+// ── Month History Card ────────────────────────────────────────────────────────
+function MonthCard({ month, wordsTarget, wordsActual, hoursTarget, hoursActual, daysTarget, daysActual, isCurrent }) {
+  const [open, setOpen] = useState(isCurrent);
+  const wordsPct = wordsTarget ? (wordsActual / wordsTarget) * 100 : 0;
+  const hoursPct = hoursTarget ? (hoursActual / hoursTarget) * 100 : 0;
+  const daysPct  = daysTarget  ? (daysActual  / daysTarget)  * 100 : 0;
+
+  return (
+    <div style={{ background: "#111820", border: `1px solid ${isCurrent ? "#00E5BE44" : "#1e2630"}`, borderRadius: 14, overflow: "hidden" }}>
+      <div onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", cursor: "pointer" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {isCurrent && <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#00E5BE", flexShrink: 0 }} />}
+          <span style={{ fontWeight: 600, color: isCurrent ? "#fff" : "#8899aa", fontSize: 14 }}>{month}</span>
+          {isCurrent && <span style={{ fontSize: 10, color: "#00E5BE", fontWeight: 600, letterSpacing: "0.06em" }}>CURRENT</span>}
         </div>
-      ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 12, color: wordsPct >= 100 ? "#00E5BE" : "#6b7a8d" }}>{wordsActual}/{wordsTarget} words</span>
+          <span style={{ color: "#3a4a5a", fontSize: 12 }}>{open ? "▲" : "▼"}</span>
+        </div>
+      </div>
+      {open && (
+        <div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+          <ProgressBar pct={wordsPct} color="#00E5BE" fact={wordsActual} target={wordsTarget} unit="words" />
+          <ProgressBar pct={hoursPct} color="#7c3aed" fact={`${hoursActual.toFixed(1)}h`} target={`${hoursTarget}h`} unit="" />
+          <ProgressBar pct={daysPct}  color="#f97316" fact={`${daysActual}d`} target={`${daysTarget}d`} unit="" />
+        </div>
+      )}
     </div>
   );
 }
@@ -74,28 +86,14 @@ function WordRow({ word, translation, category, date, example, phrase }) {
   }[category] || "#6b7a8d";
 
   return (
-    <div
-      onClick={() => setOpen(o => !o)}
-      style={{
-        padding: "12px 16px", borderRadius: 10, background: "#111820",
-        border: "1px solid #1e2630", cursor: "pointer",
-        transition: "border-color 0.2s",
-      }}
-      onMouseEnter={e => e.currentTarget.style.borderColor = "#2a3540"}
-      onMouseLeave={e => e.currentTarget.style.borderColor = "#1e2630"}
-    >
+    <div onClick={() => setOpen(o => !o)} style={{ padding: "12px 16px", borderRadius: 10, background: "#111820", border: "1px solid #1e2630", cursor: "pointer" }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span style={{ fontWeight: 600, color: "#e2e8f0", fontSize: 15 }}>{word}</span>
-            <span style={{
-              fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
-              background: catColor + "22", color: catColor, letterSpacing: "0.04em", whiteSpace: "nowrap",
-            }}>{category || "—"}</span>
+            <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: catColor + "22", color: catColor, letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{category || "—"}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
-            <span style={{ color: "#6b7a8d", fontSize: 13 }}>{translation}</span>
-          </div>
+          <span style={{ color: "#6b7a8d", fontSize: 13, display: "block", marginTop: 3 }}>{translation}</span>
           <span style={{ fontSize: 11, color: "#3a4a5a" }}>{date}</span>
         </div>
         <span style={{ color: "#3a4a5a", fontSize: 12, flexShrink: 0, marginTop: 2 }}>{open ? "▲" : "▼"}</span>
@@ -110,40 +108,20 @@ function WordRow({ word, translation, category, date, example, phrase }) {
   );
 }
 
-// ── Stat Card ─────────────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, accent = "#00E5BE" }) {
-  return (
-    <div style={{
-      background: "#111820", border: "1px solid #1e2630", borderRadius: 12,
-      padding: "18px 20px", display: "flex", flexDirection: "column", gap: 4,
-    }}>
-      <span style={{ fontSize: 11, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: 32, fontWeight: 700, color: accent, lineHeight: 1.1 }}>{value ?? "—"}</span>
-      {sub && <span style={{ fontSize: 12, color: "#3a4a5a" }}>{sub}</span>}
-    </div>
-  );
-}
-
 // ── Main ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [view, setView] = useState("overview"); // overview | words
+  const [view, setView] = useState("overview");
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("All");
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fetchData();
-      setData(result);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError(null);
+    try { setData(await fetchData()); }
+    catch (e) { setError(e.message); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -167,43 +145,44 @@ export default function App() {
     </div>
   );
 
-  const words = data?.words || [];
-  const goals = data?.goals || [];
+  const words    = data?.words    || [];
+  const goals    = data?.goals    || [];
+  const sessions = data?.sessions || [];
   const currentMonth = data?.currentMonth || new Date().toISOString().slice(0, 7);
 
-  // Stats
-  const wordsThisMonth = words.filter(w => w.dateAdded?.startsWith(currentMonth)).length;
-  const thisGoal = goals.find(g => g.month === currentMonth);
-  const wordsTarget = thisGoal?.wordsTarget || 30;
-  const wordsPct = Math.min((wordsThisMonth / wordsTarget) * 100, 100);
+  // Build month history — all months that appear in goals or words
+  const monthSet = new Set([
+    ...goals.map(g => g.month),
+    ...words.map(w => w.dateAdded?.slice(0, 7)).filter(Boolean),
+    currentMonth,
+  ]);
+  const allMonths = Array.from(monthSet).filter(Boolean).sort().reverse();
+
+  const monthHistory = allMonths.map(month => {
+    const goal = goals.find(g => g.month === month) || {};
+    const wordsActual = words.filter(w => w.dateAdded?.startsWith(month)).length;
+    const monthSessions = sessions.filter(s => s.date?.startsWith(month));
+    const hoursActual = monthSessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60;
+    const daysActual  = new Set(monthSessions.map(s => s.date)).size;
+    return {
+      month,
+      wordsTarget: goal.wordsTarget || 0,
+      wordsActual,
+      hoursTarget: goal.hoursTarget || 0,
+      hoursActual,
+      daysTarget: goal.daysTarget || 0,
+      daysActual,
+      isCurrent: month === currentMonth,
+    };
+  });
+
+  // Current month stats for header rings
+  const current = monthHistory.find(m => m.isCurrent) || {};
   const totalWords = words.length;
 
-  // By month chart (last 6)
-  const monthCounts = {};
-  words.forEach(w => { if (w.dateAdded) { const m = w.dateAdded.slice(0, 7); monthCounts[m] = (monthCounts[m] || 0) + 1; } });
-  const monthKeys = Object.keys(monthCounts).sort().slice(-6);
-  const chartData = monthKeys.map(m => ({ label: m.slice(5), count: monthCounts[m] }));
-
-  // Quarter stats
-  const quarterMap = { "01": "Q1", "02": "Q1", "03": "Q1", "04": "Q2", "05": "Q2", "06": "Q2", "07": "Q3", "08": "Q3", "09": "Q3", "10": "Q4", "11": "Q4", "12": "Q4" };
-  const currentQ = quarterMap[currentMonth.slice(5, 7)];
-  const wordsThisQ = words.filter(w => w.dateAdded && quarterMap[w.dateAdded.slice(5, 7)] === currentQ && w.dateAdded.startsWith(currentMonth.slice(0, 4))).length;
-
-  // Category breakdown
+  // Category breakdown for words view
   const catCounts = {};
   words.forEach(w => { const c = w.category || "Other"; catCounts[c] = (catCounts[c] || 0) + 1; });
-  const topCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
-
-  // Streak
-  const today = new Date();
-  let streak = 0;
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(today); d.setDate(d.getDate() - i);
-    const ds = d.toISOString().slice(0, 10);
-    if (words.some(w => w.dateAdded === ds)) streak++; else break;
-  }
-
-  // Filtered words
   const cats = ["All", ...Object.keys(catCounts).sort()];
   const filtered = words
     .filter(w => filterCat === "All" || w.category === filterCat)
@@ -227,8 +206,8 @@ export default function App() {
         * { box-sizing: border-box; }
         @media (max-width: 600px) {
           .main-pad { padding: 12px !important; }
-          .top-grid { grid-template-columns: 1fr !important; }
-          .stats-grid { grid-template-columns: 1fr 1fr !important; }
+          .rings-row { grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; }
+          .ring-card { padding: 12px 8px !important; }
           .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: #0d1520; border-top: 1px solid #1e2630; display: flex !important; padding: 8px 16px 24px; gap: 8px; z-index: 100; }
           .nav-tabs button { flex: 1; padding: 10px !important; font-size: 14px !important; border-radius: 10px !important; }
           .bottom-spacer { height: 80px; }
@@ -247,10 +226,7 @@ export default function App() {
             {navBtn("overview", "Overview")}
             {navBtn("words", `Words (${totalWords})`)}
           </div>
-          <button className="refresh-btn" onClick={load} style={{
-            background: "transparent", border: "1px solid #1e2630", borderRadius: 8,
-            color: "#6b7a8d", fontSize: 12, padding: "6px 12px", cursor: "pointer",
-          }}>↻ Refresh</button>
+          <button className="refresh-btn" onClick={load} style={{ background: "transparent", border: "1px solid #1e2630", borderRadius: 8, color: "#6b7a8d", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>↻ Refresh</button>
         </div>
       </div>
 
@@ -258,71 +234,37 @@ export default function App() {
 
         {view === "overview" && (
           <>
-            {/* Top row — ring + stats */}
-            <div className="top-grid" style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, marginBottom: 16 }}>
-              {/* Monthly goal card */}
-              <div style={{
-                background: "#111820", border: "1px solid #1e2630", borderRadius: 14,
-                padding: "20px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-              }}>
-                <span style={{ fontSize: 11, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Monthly Goal</span>
-                <RingProgress pct={wordsPct} color={accent} label={`${wordsThisMonth} / ${wordsTarget}`} />
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ margin: 0, fontSize: 12, color: "#6b7a8d" }}>{currentMonth}</p>
-                  {wordsPct >= 100
-                    ? <p style={{ margin: "4px 0 0", fontSize: 12, color: accent }}>🎉 Goal complete!</p>
-                    : <p style={{ margin: "4px 0 0", fontSize: 12, color: "#3a4a5a" }}>{wordsTarget - wordsThisMonth} words left</p>}
-                </div>
+            {/* Current month rings */}
+            <div className="rings-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div className="ring-card" style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Words</span>
+                <RingProgress pct={current.wordsTarget ? (current.wordsActual / current.wordsTarget) * 100 : 0} color={accent} label={`${current.wordsActual||0}/${current.wordsTarget||0}`} />
               </div>
-
-              {/* Stats grid */}
-              <div className="stats-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <StatCard label="Total Words" value={totalWords} sub="in your dictionary" />
-                <StatCard label="This Quarter" value={wordsThisQ} sub={currentQ + " " + currentMonth.slice(0, 4)} accent="#7c3aed" />
-                <StatCard label="Day Streak 🔥" value={streak} sub="consecutive days" accent="#f97316" />
-                <StatCard label="Top Category" value={topCat?.[0] || "—"} sub={topCat ? `${topCat[1]} words` : ""} accent="#3b82f6" />
+              <div className="ring-card" style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Hours</span>
+                <RingProgress pct={current.hoursTarget ? (current.hoursActual / current.hoursTarget) * 100 : 0} color="#7c3aed" label={`${(current.hoursActual||0).toFixed(1)}/${current.hoursTarget||0}h`} />
+              </div>
+              <div className="ring-card" style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Days</span>
+                <RingProgress pct={current.daysTarget ? (current.daysActual / current.daysTarget) * 100 : 0} color="#f97316" label={`${current.daysActual||0}/${current.daysTarget||0}d`} />
               </div>
             </div>
 
-            {/* Chart */}
-            <div style={{
-              background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 20px", marginBottom: 16,
-            }}>
-              <p style={{ margin: "0 0 12px", fontSize: 12, color: "#6b7a8d", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Words Added — Last 6 Months</p>
-              <BarChart data={chartData} color={accent} />
-            </div>
-
-            {/* Category breakdown */}
-            <div style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 20px" }}>
-              <p style={{ margin: "0 0 12px", fontSize: 12, color: "#6b7a8d", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>By Category</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {Object.entries(catCounts).sort((a, b) => b[1] - a[1]).map(([cat, cnt]) => {
-                  const c = { Business: "#3b82f6", Everyday: "#22c55e", "Phrasal Verb": "#f97316", Idiom: "#a855f7", Slang: "#ec4899", Academic: "#94a3b8", Phrase: "#eab308", Other: "#78716c" }[cat] || "#6b7a8d";
-                  return (
-                    <div key={cat} style={{ display: "flex", alignItems: "center", gap: 8, background: "#0a0f14", border: `1px solid ${c}33`, borderRadius: 8, padding: "7px 12px" }}>
-                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: c, flexShrink: 0 }} />
-                      <span style={{ fontSize: 13, color: "#c8d6e5" }}>{cat}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: c }}>{cnt}</span>
-                    </div>
-                  );
-                })}
-              </div>
+            {/* Month history */}
+            <p style={{ fontSize: 11, color: "#6b7a8d", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", margin: "0 0 10px" }}>Monthly History</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {monthHistory.map(m => <MonthCard key={m.month} {...m} />)}
             </div>
           </>
         )}
 
         {view === "words" && (
           <>
-            {/* Search */}
             <input
               placeholder="Search word or translation..."
               value={search} onChange={e => setSearch(e.target.value)}
-              style={{
-                width: "100%", marginBottom: 10, background: "#111820", border: "1px solid #1e2630",
-                borderRadius: 8, padding: "10px 14px", color: "#e2e8f0", fontSize: 14, outline: "none",
-              }}
+              style={{ width: "100%", marginBottom: 10, background: "#111820", border: "1px solid #1e2630", borderRadius: 8, padding: "10px 14px", color: "#e2e8f0", fontSize: 14, outline: "none" }}
             />
-            {/* Category filters — horizontal scroll on mobile */}
             <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
               {cats.map(c => (
                 <button key={c} onClick={() => setFilterCat(c)} style={{
@@ -334,18 +276,15 @@ export default function App() {
                 }}>{c}</button>
               ))}
             </div>
-
-            {/* Word list */}
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {filtered.length === 0
                 ? <p style={{ color: "#6b7a8d", fontSize: 14, textAlign: "center", padding: "40px 0" }}>No words found</p>
-                : filtered.map((w, i) => (
-                  <WordRow key={i} word={w.word} translation={w.translation} category={w.category} date={w.dateAdded} example={w.example} phrase={w.phrase} />
-                ))
+                : filtered.map((w, i) => <WordRow key={i} word={w.word} translation={w.translation} category={w.category} date={w.dateAdded} example={w.example} phrase={w.phrase} />)
               }
             </div>
           </>
         )}
+
         <div className="bottom-spacer" />
       </div>
     </div>

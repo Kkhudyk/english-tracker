@@ -1,5 +1,6 @@
 const VOCAB_DB = "54062d676a5044fdbf626ca6c1dbf6ab";
 const GOALS_DB = "a5502e630cb742d9ae0206a8a4d1ecfb";
+const LOG_DB   = "38a0f369dc668024b628f3983d221cf9";
 
 async function queryDatabase(dbId, token) {
   const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
@@ -33,17 +34,11 @@ export default async function handler(req, res) {
   if (!token) return res.status(500).json({ error: "NOTION_TOKEN not configured" });
 
   try {
-    const [vocabPages, goalPages] = await Promise.all([
+    const [vocabPages, goalPages, logPages] = await Promise.all([
       queryDatabase(VOCAB_DB, token),
       queryDatabase(GOALS_DB, token),
+      queryDatabase(LOG_DB, token),
     ]);
-
-    // Debug: return raw props of first page to identify property names/types
-    if (req.query?.debug === "1" && vocabPages.length > 0) {
-      const rawProps = Object.entries(vocabPages[0].properties).map(([k, v]) => ({ name: k, type: v.type }));
-      const rawGoalProps = goalPages.length > 0 ? Object.entries(goalPages[0].properties).map(([k, v]) => ({ name: k, type: v.type })) : [];
-      return res.status(200).json({ vocabProps: rawProps, goalProps: rawGoalProps });
-    }
 
     const words = vocabPages.map(p => {
       const props = p.properties;
@@ -63,12 +58,21 @@ export default async function handler(req, res) {
         month: getProp(props, "Month", "title"),
         wordsTarget: getProp(props, "Words Target", "number"),
         hoursTarget: getProp(props, "Study Hours Target", "number"),
+        daysTarget: getProp(props, "Days Target", "number"),
       };
     });
 
+    const sessions = logPages.map(p => {
+      const props = p.properties;
+      return {
+        date: getProp(props, "Date", "date"),
+        duration: getProp(props, "Duration", "number"),
+      };
+    }).filter(s => s.date);
+
     const currentMonth = new Date().toISOString().slice(0, 7);
 
-    return res.status(200).json({ words, goals, currentMonth });
+    return res.status(200).json({ words, goals, sessions, currentMonth });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
