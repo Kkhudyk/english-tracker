@@ -210,13 +210,25 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0f14", fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0" }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        * { box-sizing: border-box; }
+        @media (max-width: 600px) {
+          .header-inner { padding: 0 16px !important; height: 52px !important; }
+          .main-pad { padding: 16px !important; }
+          .top-grid { grid-template-columns: 1fr !important; }
+          .stats-grid { grid-template-columns: 1fr 1fr !important; }
+          .word-row-inner { flex-wrap: wrap; gap: 6px !important; }
+          .word-meta { display: none !important; }
+        }
+      `}</style>
+
       {/* Header */}
       <div style={{ borderBottom: "1px solid #1e2630", padding: "0 32px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="header-inner" style={{ maxWidth: 960, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 20 }}>🇬🇧</span>
-            <span style={{ fontWeight: 700, fontSize: 16, color: "#fff" }}>English Tracker</span>
-            <span style={{ fontSize: 12, color: "#3a4a5a", marginLeft: 4 }}>/ Nick</span>
+            <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>English Tracker</span>
           </div>
           <div style={{ display: "flex", gap: 4 }}>
             {navBtn("overview", "Overview")}
@@ -224,21 +236,21 @@ export default function App() {
           </div>
           <button onClick={load} style={{
             background: "transparent", border: "1px solid #1e2630", borderRadius: 8,
-            color: "#6b7a8d", fontSize: 12, padding: "6px 14px", cursor: "pointer",
-          }}>↻ Refresh</button>
+            color: "#6b7a8d", fontSize: 12, padding: "6px 12px", cursor: "pointer",
+          }}>↻</button>
         </div>
       </div>
 
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 32px" }}>
+      <div className="main-pad" style={{ maxWidth: 960, margin: "0 auto", padding: "24px 32px" }}>
 
         {view === "overview" && (
           <>
             {/* Top row — ring + stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 20, marginBottom: 20 }}>
+            <div className="top-grid" style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, marginBottom: 16 }}>
               {/* Monthly goal card */}
               <div style={{
                 background: "#111820", border: "1px solid #1e2630", borderRadius: 14,
-                padding: "24px 28px", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, minWidth: 200,
+                padding: "20px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
               }}>
                 <span style={{ fontSize: 11, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Monthly Goal</span>
                 <RingProgress pct={wordsPct} color={accent} label={`${wordsThisMonth} / ${wordsTarget}`} />
@@ -251,7 +263,7 @@ export default function App() {
               </div>
 
               {/* Stats grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div className="stats-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <StatCard label="Total Words" value={totalWords} sub="in your dictionary" />
                 <StatCard label="This Quarter" value={wordsThisQ} sub={currentQ + " " + currentMonth.slice(0, 4)} accent="#7c3aed" />
                 <StatCard label="Day Streak 🔥" value={streak} sub="consecutive days" accent="#f97316" />
@@ -261,21 +273,21 @@ export default function App() {
 
             {/* Chart */}
             <div style={{
-              background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "20px 24px", marginBottom: 20,
+              background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 20px", marginBottom: 16,
             }}>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "#6b7a8d", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Words Added — Last 6 Months</p>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "#6b7a8d", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Words Added — Last 6 Months</p>
               <BarChart data={chartData} color={accent} />
             </div>
 
             {/* Category breakdown */}
-            <div style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "20px 24px" }}>
-              <p style={{ margin: "0 0 16px", fontSize: 12, color: "#6b7a8d", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>By Category</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            <div style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 20px" }}>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "#6b7a8d", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>By Category</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {Object.entries(catCounts).sort((a, b) => b[1] - a[1]).map(([cat, cnt]) => {
                   const c = { Business: "#3b82f6", Everyday: "#22c55e", "Phrasal Verb": "#f97316", Idiom: "#a855f7", Slang: "#ec4899", Academic: "#94a3b8", Phrase: "#eab308", Other: "#78716c" }[cat] || "#6b7a8d";
                   return (
-                    <div key={cat} style={{ display: "flex", alignItems: "center", gap: 8, background: "#0a0f14", border: `1px solid ${c}33`, borderRadius: 8, padding: "8px 14px" }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: c, flexShrink: 0 }} />
+                    <div key={cat} style={{ display: "flex", alignItems: "center", gap: 8, background: "#0a0f14", border: `1px solid ${c}33`, borderRadius: 8, padding: "7px 12px" }}>
+                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: c, flexShrink: 0 }} />
                       <span style={{ fontSize: 13, color: "#c8d6e5" }}>{cat}</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: c }}>{cnt}</span>
                     </div>
@@ -288,26 +300,26 @@ export default function App() {
 
         {view === "words" && (
           <>
-            {/* Filters */}
-            <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-              <input
-                placeholder="Search word or translation..."
-                value={search} onChange={e => setSearch(e.target.value)}
-                style={{
-                  flex: 1, minWidth: 200, background: "#111820", border: "1px solid #1e2630",
-                  borderRadius: 8, padding: "9px 14px", color: "#e2e8f0", fontSize: 14, outline: "none",
-                }}
-              />
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {cats.map(c => (
-                  <button key={c} onClick={() => setFilterCat(c)} style={{
-                    background: filterCat === c ? accent : "#111820",
-                    color: filterCat === c ? "#0a0f14" : "#6b7a8d",
-                    border: "1px solid " + (filterCat === c ? accent : "#1e2630"),
-                    borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer",
-                  }}>{c}</button>
-                ))}
-              </div>
+            {/* Search */}
+            <input
+              placeholder="Search word or translation..."
+              value={search} onChange={e => setSearch(e.target.value)}
+              style={{
+                width: "100%", marginBottom: 10, background: "#111820", border: "1px solid #1e2630",
+                borderRadius: 8, padding: "10px 14px", color: "#e2e8f0", fontSize: 14, outline: "none",
+              }}
+            />
+            {/* Category filters — horizontal scroll on mobile */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+              {cats.map(c => (
+                <button key={c} onClick={() => setFilterCat(c)} style={{
+                  background: filterCat === c ? accent : "#111820",
+                  color: filterCat === c ? "#0a0f14" : "#6b7a8d",
+                  border: "1px solid " + (filterCat === c ? accent : "#1e2630"),
+                  borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+                }}>{c}</button>
+              ))}
             </div>
 
             {/* Word list */}
