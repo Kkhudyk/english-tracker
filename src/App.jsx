@@ -1,30 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 
-const NOTION_VOCAB_DS = "e7c54838-25ce-4ae7-b742-3af20f196895";
-const NOTION_GOALS_DS = "d3782792-86fd-4840-8def-28f46109cab7";
-
-const SYSTEM_PROMPT = `You are a data assistant. Query the user's Notion databases and return structured JSON only — no markdown, no explanation.
-
-When asked for vocabulary stats, query the English Vocabulary database (data source: collection://${NOTION_VOCAB_DS}) and English Goals database (collection://${NOTION_GOALS_DS}).
-
-Always respond with valid JSON matching the requested schema exactly.`;
-
-async function callClaude(userPrompt) {
-  const res = await fetch("/api/claude", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1000,
-      system: SYSTEM_PROMPT,
-      mcp_servers: [{ type: "url", url: "https://mcp.notion.com/mcp", name: "notion" }],
-      messages: [{ role: "user", content: userPrompt }],
-    }),
-  });
+async function fetchData() {
+  const res = await fetch("/api/notion");
   const data = await res.json();
-  const text = data.content?.filter(b => b.type === "text").map(b => b.text).join("") || "";
-  const clean = text.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
+  if (!res.ok) throw new Error(data.error || "Failed to fetch data");
+  return data;
 }
 
 // ── Ring Progress ────────────────────────────────────────────────────────────
@@ -145,17 +125,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const result = await callClaude(`
-Query both Notion databases and return this JSON exactly:
-{
-  "words": [ { "word": "", "translation": "", "category": "", "dateAdded": "YYYY-MM-DD", "example": "", "phrase": "" } ],
-  "goals": [ { "month": "YYYY-MM", "wordsTarget": 0, "hoursTarget": 0 } ],
-  "currentMonth": "YYYY-MM"
-}
-Populate "words" from database collection://${NOTION_VOCAB_DS} — all records.
-Populate "goals" from collection://${NOTION_GOALS_DS} — all records.
-Set "currentMonth" to the current month in YYYY-MM format.
-Return ONLY the JSON object, no other text.`);
+      const result = await fetchData();
       setData(result);
     } catch (e) {
       setError(e.message);
