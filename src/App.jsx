@@ -209,39 +209,40 @@ export default function App() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0f14", fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0" }}>
+    <div style={{ minHeight: "100vh", background: "#0a0f14", fontFamily: "'Inter', system-ui, sans-serif", color: "#e2e8f0", overflowX: "hidden" }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         * { box-sizing: border-box; }
         @media (max-width: 600px) {
-          .header-inner { padding: 0 16px !important; height: 52px !important; }
-          .main-pad { padding: 16px !important; }
+          .main-pad { padding: 12px !important; }
           .top-grid { grid-template-columns: 1fr !important; }
           .stats-grid { grid-template-columns: 1fr 1fr !important; }
-          .word-row-inner { flex-wrap: wrap; gap: 6px !important; }
-          .word-meta { display: none !important; }
+          .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: #0d1520; border-top: 1px solid #1e2630; display: flex !important; padding: 8px 16px 24px; gap: 8px; z-index: 100; }
+          .nav-tabs button { flex: 1; padding: 10px !important; font-size: 14px !important; border-radius: 10px !important; }
+          .bottom-spacer { height: 80px; }
+          .refresh-btn { display: none !important; }
         }
       `}</style>
 
       {/* Header */}
-      <div style={{ borderBottom: "1px solid #1e2630", padding: "0 32px" }}>
-        <div className="header-inner" style={{ maxWidth: 960, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
+      <div style={{ borderBottom: "1px solid #1e2630" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 52, padding: "0 16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 20 }}>🇬🇧</span>
+            <span style={{ fontSize: 18 }}>🇬🇧</span>
             <span style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>English Tracker</span>
           </div>
-          <div style={{ display: "flex", gap: 4 }}>
+          <div className="nav-tabs" style={{ display: "flex", gap: 4 }}>
             {navBtn("overview", "Overview")}
             {navBtn("words", `Words (${totalWords})`)}
           </div>
-          <button onClick={load} style={{
+          <button className="refresh-btn" onClick={load} style={{
             background: "transparent", border: "1px solid #1e2630", borderRadius: 8,
             color: "#6b7a8d", fontSize: 12, padding: "6px 12px", cursor: "pointer",
-          }}>↻</button>
+          }}>↻ Refresh</button>
         </div>
       </div>
 
-      <div className="main-pad" style={{ maxWidth: 960, margin: "0 auto", padding: "24px 32px" }}>
+      <div className="main-pad" style={{ maxWidth: 960, margin: "0 auto", padding: "20px 24px" }}>
 
         {view === "overview" && (
           <>
@@ -333,6 +334,7 @@ export default function App() {
             </div>
           </>
         )}
+        <div className="bottom-spacer" />
       </div>
     </div>
   );
