@@ -218,13 +218,15 @@ export default function App() {
         @keyframes spin { to { transform: rotate(360deg); } }
         * { box-sizing: border-box; }
         @media (max-width: 600px) {
-          .main-pad { padding: 12px !important; }
-          .rings-row { grid-template-columns: 1fr 1fr 1fr !important; gap: 8px !important; }
-          .ring-card { padding: 12px 8px !important; }
+          .main-pad { padding: 10px !important; }
+          .rings-row { gap: 6px !important; }
+          .ring-card { padding: 10px 4px !important; }
+          .ring-label { font-size: 9px !important; }
           .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: #0d1520; border-top: 1px solid #1e2630; display: flex !important; padding: 8px 16px 24px; gap: 8px; z-index: 100; }
           .nav-tabs button { flex: 1; padding: 10px !important; font-size: 14px !important; border-radius: 10px !important; }
           .bottom-spacer { height: 80px; }
-          .refresh-btn { display: none !important; }
+          .refresh-btn { display: block !important; }
+          .refresh-btn-desktop { display: none !important; }
         }
       `}</style>
 
@@ -239,7 +241,7 @@ export default function App() {
             {navBtn("overview", "Overview")}
             {navBtn("words", `Words (${totalWords})`)}
           </div>
-          <button className="refresh-btn" onClick={load} style={{ background: "transparent", border: "1px solid #1e2630", borderRadius: 8, color: "#6b7a8d", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>↻ Refresh</button>
+          <button className="refresh-btn-desktop" onClick={load} style={{ background: "transparent", border: "1px solid #1e2630", borderRadius: 8, color: "#6b7a8d", fontSize: 12, padding: "6px 12px", cursor: "pointer" }}>↻ Refresh</button>
         </div>
       </div>
 
@@ -247,19 +249,22 @@ export default function App() {
 
         {view === "overview" && (
           <>
+            {/* Mobile refresh button */}
+            <button className="refresh-btn" onClick={load} style={{ display: "none", width: "100%", marginBottom: 10, background: "#111820", border: "1px solid #1e2630", borderRadius: 10, color: "#6b7a8d", fontSize: 13, padding: "10px", cursor: "pointer" }}>↻ Refresh</button>
+
             {/* Current month rings */}
             <div className="rings-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
               <div className="ring-card" style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Words</span>
-                <RingProgress pct={current.wordsTarget ? (current.wordsActual / current.wordsTarget) * 100 : 0} color={accent} label={`${current.wordsActual||0}/${current.wordsTarget||0}`} />
+                <span className="ring-label" style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Words</span>
+                <RingProgress size={90} pct={current.wordsTarget ? (current.wordsActual / current.wordsTarget) * 100 : 0} color={accent} label={`${current.wordsActual||0}/${current.wordsTarget||0}`} />
               </div>
               <div className="ring-card" style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Hours</span>
-                <RingProgress pct={current.hoursTarget ? (current.hoursActual / current.hoursTarget) * 100 : 0} color="#7c3aed" label={`${(current.hoursActual||0).toFixed(1)}/${current.hoursTarget||0}h`} />
+                <span className="ring-label" style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Hours</span>
+                <RingProgress size={90} pct={current.hoursTarget ? (current.hoursActual / current.hoursTarget) * 100 : 0} color="#7c3aed" label={`${(current.hoursActual||0).toFixed(1)}/${current.hoursTarget||0}h`} />
               </div>
               <div className="ring-card" style={{ background: "#111820", border: "1px solid #1e2630", borderRadius: 14, padding: "16px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Days</span>
-                <RingProgress pct={current.daysTarget ? (current.daysActual / current.daysTarget) * 100 : 0} color="#f97316" label={`${current.daysActual||0}/${current.daysTarget||0}d`} />
+                <span className="ring-label" style={{ fontSize: 10, color: "#6b7a8d", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 600 }}>Days</span>
+                <RingProgress size={90} pct={current.daysTarget ? (current.daysActual / current.daysTarget) * 100 : 0} color="#f97316" label={`${current.daysActual||0}/${current.daysTarget||0}d`} />
               </div>
             </div>
 
