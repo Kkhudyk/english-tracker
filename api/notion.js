@@ -42,11 +42,15 @@ export default async function handler(req, res) {
 
     const words = vocabPages.map(p => {
       const props = p.properties;
+      const dateAdded = getProp(props, "Date Added", "created_time")
+        || getProp(props, "Date Added", "date")
+        || p.created_time?.slice(0, 10)
+        || "";
       return {
         word: getProp(props, "Word", "title"),
         translation: getProp(props, "Translation", "rich_text"),
         category: getProp(props, "Category", "select"),
-        dateAdded: getProp(props, "Date Added", "created_time"),
+        dateAdded,
         example: getProp(props, "Example Sentence", "rich_text"),
         phrase: getProp(props, "Memory Phrase", "rich_text"),
       };
