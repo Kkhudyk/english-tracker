@@ -1,6 +1,6 @@
-const VOCAB_DB = "54062d676a5044fdbf626ca6c1dbf6ab";
-const GOALS_DB = "a5502e630cb742d9ae0206a8a4d1ecfb";
-const LOG_DB   = "38a0f369dc668024b628f3983d221cf9";
+const VOCAB_DB = "38b0d4b986a5811d957fe12140425ed4";
+const GOALS_DB = "38b0d4b986a581b2b499ecaba876faa7";
+const LOG_DB   = "38b0d4b986a581dfac26d1e06bec4f8d";
 
 async function queryDatabase(dbId, token) {
   const res = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
